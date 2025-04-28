@@ -1,0 +1,160 @@
+swagger: "2.0"
+info:
+  title: Read Data
+  description: HTTP Endpoints for reading data from an entry in the database.
+  version: "1.0"
+paths:
+  /api/v1/b/{bucket_name}/{entry_name}:
+    get:
+      summary: Get a record from an entry
+      parameters:
+        - name: bucket_name
+          in: path
+          required: true
+          type: string
+          description: Name of bucket
+        - name: entry_name
+          in: path
+          required: true
+          type: string
+          description: Name of entry
+        - name: q
+          in: query
+          required: false
+          type: string
+          description: A query ID to read the next record in the query. If it is set, the `ts` parameter is ignored.
+        - name: ts
+          in: query
+          required: false
+          type: integer
+          format: int64
+          description: A UNIX timestamp in microseconds. If it is empty, the latest record is returned.
+      responses:
+        200:
+          description: The record is found and returned in body of the response
+          schema:
+            type: string
+        204:
+          description: No Content - If there is no record available for the given query
+        401:
+          description: Unauthorized - Access token is invalid or empty
+        403:
+          description: Forbidden - Access token denied
+        404:
+          description: Not Found - The bucket or record with the timestamp not found
+        422:
+          description: Unprocessable Entity - Bad timestamp
+      produces:
+        - text/plain
+
+  /api/v1/b/{bucket_name}/{entry_name}/batch:
+    get:
+      summary: Get a batch of records from an entry
+      parameters:
+        - name: bucket_name
+          in: path
+          required: true
+          type: string
+          description: Name of bucket
+        - name: entry_name
+          in: path
+          required: true
+          type: string
+          description: Name of entry
+        - name: q
+          in: query
+          required: true
+          type: integer
+          description: A query ID to read the next record in the query
+      responses:
+        200:
+          description: The batch of records is found and returned in body of the response
+          schema:
+            type: string
+        204:
+          description: No Content - If there is no record available for the given query
+        401:
+          description: Unauthorized - Access token is invalid or empty
+        403:
+          description: Forbidden - Access token denied
+        404:
+          description: Not Found - The bucket or record not found
+        422:
+          description: Unprocessable Entity - Bad timestamp
+      produces:
+        - text/plain
+
+  /api/v1/b/{bucket_name}/{entry_name}/q:
+    get:
+      summary: Query records for a time interval
+      description: Deprecated since version 1.13. Use the Query API instead.
+      parameters:
+        - name: bucket_name
+          in: path
+          required: true
+          type: string
+          description: Name of bucket
+        - name: entry_name
+          in: path
+          required: true
+          type: string
+          description: Name of entry
+        - name: start
+          in: query
+          required: false
+          type: integer
+          format: int64
+          description: Start time (UNIX timestamp in microseconds)
+        - name: stop
+          in: query
+          required: false
+          type: integer
+          format: int64
+          description: Stop time (UNIX timestamp in microseconds)
+        - name: ttl
+          in: query
+          required: false
+          type: integer
+          description: TTL (Time To Live) of the query in seconds (default 5s)
+        - name: continuous
+          in: query
+          required: false
+          type: boolean
+          description: Keep query if no records for the request
+        - name: limit
+          in: query
+          required: false
+          type: integer
+          description: Maximum number of records in the query
+        - name: each_n
+          in: query
+          required: false
+          type: integer
+          description: Return only every N-th record
+        - name: each_s
+          in: query
+          required: false
+          type: number
+          format: float
+          description: Return only one record per S seconds
+        # OpenAPI 2.0 does not support dynamic parameter names (like include-{label_name})
+        # You would need to manually list possible includes/excludes if needed.
+      responses:
+        200:
+          description: Query created successfully
+          schema:
+            type: object
+            properties:
+              q:
+                type: integer
+                description: Query ID
+        401:
+          description: Unauthorized - Access token is invalid or empty
+        403:
+          description: Forbidden - Access token denied
+        404:
+          description: Not Found - The bucket or entry not found
+        422:
+          description: Unprocessable Entity - Bad timestamp
+      produces:
+        - application/json

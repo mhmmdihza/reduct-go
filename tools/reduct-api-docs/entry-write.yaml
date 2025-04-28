@@ -1,0 +1,96 @@
+swagger: '2.0'
+info:
+  title: Write Data API
+  description: HTTP Endpoints for writing data to the database.
+  version: "1.0.0"
+paths:
+  /api/v1/b/{bucket_name}/{entry_name}:
+    post:
+      summary: Write a record to an entry
+      description: Write a single record to an entry. ReductStore creates an entry on the first write operation.
+      parameters:
+        - name: bucket_name
+          in: path
+          required: true
+          type: string
+          description: Name of bucket
+        - name: entry_name
+          in: path
+          required: true
+          type: string
+          description: Name of entry
+        - name: ts
+          in: query
+          required: true
+          type: integer
+          format: int64
+          description: A UNIX timestamp in microseconds
+        - name: Content-Length
+          in: header
+          required: true
+          type: integer
+          format: int64
+          description: Content-length is required to start an asynchronous write operation
+        - name: x-reduct-label-<name>
+          in: header
+          required: false
+          type: string
+          description: A value of a label assigned to the record
+        - name: body
+          in: body
+          required: false
+          description: Record payload (can be empty)
+          schema:
+            type: string
+            format: binary
+      responses:
+        '200':
+          description: The record is written
+        '400':
+          description: Posted content bigger or smaller than content-length
+        '401':
+          description: Access token is invalid or empty
+        '403':
+          description: Access token does not have write permissions
+        '404':
+          description: Bucket is not found
+        '409':
+          description: A record with the same timestamp already exists
+        '422':
+          description: Bad timestamp
+
+  /api/v1/b/{bucket_name}/{entry_name}/batch:
+    post:
+      summary: Write batch of records
+      description: Write multiple records to an entry using the Batch Protocol.
+      parameters:
+        - name: bucket_name
+          in: path
+          required: true
+          type: string
+          description: Name of bucket
+        - name: entry_name
+          in: path
+          required: true
+          type: string
+          description: Name of entry
+        - name: body
+          in: body
+          required: false
+          description: Batch of records payload
+          schema:
+            type: string
+            format: binary
+      responses:
+        '200':
+          description: The request was valid. However, some records may not be written. Check headers.
+        '400':
+          description: Posted content bigger or smaller than content-length
+        '401':
+          description: Access token is invalid or empty
+        '403':
+          description: Access token does not have write permissions
+        '404':
+          description: Bucket is not found
+        '422':
+          description: Bad timestamp or header format

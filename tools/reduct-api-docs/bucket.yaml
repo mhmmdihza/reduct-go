@@ -1,0 +1,226 @@
+swagger: '2.0'
+info:
+  title: Bucket API
+  description: Bucket API allows users to create, modify, and delete buckets.
+  version: 1.0.0
+paths:
+  /api/v1/b/{bucket_name}:
+    get:
+      summary: Get information about a bucket
+      parameters:
+        - name: bucket_name
+          in: path
+          description: Name of bucket
+          required: true
+          type: string
+      responses:
+        200:
+          description: Information about the bucket in JSON format
+          schema:
+            type: object
+            properties:
+              settings:
+                type: object
+                properties:
+                  max_block_size:
+                    type: integer
+                    description: Max block content_length in bytes
+                  max_block_records:
+                    type: integer
+                    description: Max number of records in a block
+                  quota_type:
+                    type: string
+                    description: Quota type
+                    enum: [NONE, FIFO]
+                  quota_size:
+                    type: integer
+                    description: Quota content_length in bytes
+              info:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  entry_count:
+                    type: integer
+                  size:
+                    type: integer
+                  oldest_record:
+                    type: integer
+                  latest_record:
+                    type: integer
+                  is_provisioned:
+                    type: boolean
+              entries:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    size:
+                      type: integer
+                    block_count:
+                      type: integer
+                    record_count:
+                      type: integer
+                    oldest_record:
+                      type: integer
+                    latest_record:
+                      type: integer
+        401:
+          description: Access token is invalid or empty
+        404:
+          description: The bucket does not exist
+
+    head:
+      summary: Check if a bucket exists
+      parameters:
+        - name: bucket_name
+          in: path
+          description: Name of bucket
+          required: true
+          type: string
+      responses:
+        200:
+          description: The bucket exists
+        401:
+          description: Access token is invalid or empty
+        404:
+          description: The bucket does not exist
+
+    post:
+      summary: Create a new bucket
+      consumes:
+        - application/json
+      parameters:
+        - name: bucket_name
+          in: path
+          description: Name of new bucket
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: Parameters for creating a bucket
+          required: false
+          schema:
+            type: object
+            properties:
+              max_block_size:
+                type: integer
+                description: 'Maximum size of a data block in bytes (default: 64MB)'
+              max_block_records:
+                type: integer
+                description: Maximum number of records in a block
+              quota_type:
+                type: string
+                description: Type of quota. Can be 'NONE', 'FIFO', or 'HARD'
+              quota_size:
+                type: integer
+                description: Size of quota in bytes
+      responses:
+        200:
+          description: The new bucket is created
+        401:
+          description: Access token is invalid or empty
+        403:
+          description: Access token doesn't have enough permissions
+        409:
+          description: A bucket with the same name already exists
+        422:
+          description: JSON request is invalid
+
+    put:
+      summary: Change settings of a bucket
+      consumes:
+        - application/json
+      parameters:
+        - name: bucket_name
+          in: path
+          description: Name of bucket
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: Parameters for updating a bucket
+          required: true
+          schema:
+            type: object
+            properties:
+              max_block_size:
+                type: integer
+                description: Maximum content_length of a data block in bytes
+              max_block_records:
+                type: integer
+                description: Maximum number of records in a block
+              quota_type:
+                type: string
+                description: Type of quota. Can be 'NONE', 'FIFO', or 'HARD'
+              quota_size:
+                type: integer
+                description: Size of quota in bytes
+      responses:
+        200:
+          description: The settings are updated
+        401:
+          description: Access token is invalid or empty
+        403:
+          description: Access token doesn't have enough permissions
+        404:
+          description: Bucket doesn't exist
+        409:
+          description: Bucket is provisioned
+        422:
+          description: JSON request is invalid
+
+    delete:
+      summary: Remove a bucket
+      parameters:
+        - name: bucket_name
+          in: path
+          description: Name of bucket
+          required: true
+          type: string
+      responses:
+        200:
+          description: The bucket is deleted
+        401:
+          description: Access token is invalid or empty
+        403:
+          description: Access token doesn't have enough permissions
+        404:
+          description: Bucket doesn't exist
+
+  /api/v1/b/{bucket_name}/rename:
+    put:
+      summary: Rename a bucket
+      consumes:
+        - application/json
+      parameters:
+        - name: bucket_name
+          in: path
+          description: Name of bucket
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: New name for the bucket
+          required: true
+          schema:
+            type: object
+            properties:
+              new_name:
+                type: string
+                description: New name of the bucket
+      responses:
+        200:
+          description: The bucket is renamed
+        401:
+          description: Access token is invalid or empty
+        403:
+          description: Access token doesn't have enough permissions
+        404:
+          description: Bucket doesn't exist
+        409:
+          description: Bucket with the new name already exists
+        422:
+          description: JSON request is invalid

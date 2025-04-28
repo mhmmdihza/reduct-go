@@ -1,0 +1,461 @@
+swagger: '2.0'
+info:
+  title: Write Data API
+  description: HTTP Endpoints for writing data to the database.
+  version: "1.0.0"
+paths:
+  /api/v1/b/{bucket_name}:
+    get:
+      summary: Get information about a bucket
+      parameters:
+        - name: bucket_name
+          in: path
+          description: Name of bucket
+          required: true
+          type: string
+      responses:
+        200:
+          description: Information about the bucket in JSON format
+          schema:
+            type: object
+            properties:
+              settings:
+                type: object
+                properties:
+                  max_block_size:
+                    type: integer
+                    description: Max block content_length in bytes
+                  max_block_records:
+                    type: integer
+                    description: Max number of records in a block
+                  quota_type:
+                    type: string
+                    description: Quota type
+                    enum: [NONE, FIFO]
+                  quota_size:
+                    type: integer
+                    description: Quota content_length in bytes
+              info:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  entry_count:
+                    type: integer
+                  size:
+                    type: integer
+                  oldest_record:
+                    type: integer
+                  latest_record:
+                    type: integer
+                  is_provisioned:
+                    type: boolean
+              entries:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    size:
+                      type: integer
+                    block_count:
+                      type: integer
+                    record_count:
+                      type: integer
+                    oldest_record:
+                      type: integer
+                    latest_record:
+                      type: integer
+        401:
+          description: Access token is invalid or empty
+        404:
+          description: The bucket does not exist
+    head:
+      summary: Check if a bucket exists
+      parameters:
+        - name: bucket_name
+          in: path
+          description: Name of bucket
+          required: true
+          type: string
+      responses:
+        200:
+          description: The bucket exists
+        401:
+          description: Access token is invalid or empty
+        404:
+          description: The bucket does not exist
+    post:
+      summary: Create a new bucket
+      consumes:
+        - application/json
+      parameters:
+        - name: bucket_name
+          in: path
+          description: Name of new bucket
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: Parameters for creating a bucket
+          required: false
+          schema:
+            type: object
+            properties:
+              max_block_size:
+                type: integer
+                description: 'Maximum size of a data block in bytes (default: 64MB)'
+              max_block_records:
+                type: integer
+                description: Maximum number of records in a block
+              quota_type:
+                type: string
+                description: Type of quota. Can be 'NONE', 'FIFO', or 'HARD'
+              quota_size:
+                type: integer
+                description: Size of quota in bytes
+      responses:
+        200:
+          description: The new bucket is created
+        401:
+          description: Access token is invalid or empty
+        403:
+          description: Access token doesn't have enough permissions
+        409:
+          description: A bucket with the same name already exists
+        422:
+          description: JSON request is invalid
+    put:
+      summary: Change settings of a bucket
+      consumes:
+        - application/json
+      parameters:
+        - name: bucket_name
+          in: path
+          description: Name of bucket
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: Parameters for updating a bucket
+          required: true
+          schema:
+            type: object
+            properties:
+              max_block_size:
+                type: integer
+                description: Maximum content_length of a data block in bytes
+              max_block_records:
+                type: integer
+                description: Maximum number of records in a block
+              quota_type:
+                type: string
+                description: Type of quota. Can be 'NONE', 'FIFO', or 'HARD'
+              quota_size:
+                type: integer
+                description: Size of quota in bytes
+      responses:
+        200:
+          description: The settings are updated
+        401:
+          description: Access token is invalid or empty
+        403:
+          description: Access token doesn't have enough permissions
+        404:
+          description: Bucket doesn't exist
+        409:
+          description: Bucket is provisioned
+        422:
+          description: JSON request is invalid
+    delete:
+      summary: Remove a bucket
+      parameters:
+        - name: bucket_name
+          in: path
+          description: Name of bucket
+          required: true
+          type: string
+      responses:
+        200:
+          description: The bucket is deleted
+        401:
+          description: Access token is invalid or empty
+        403:
+          description: Access token doesn't have enough permissions
+        404:
+          description: Bucket doesn't exist
+  /api/v1/b/{bucket_name}/rename:
+    put:
+      summary: Rename a bucket
+      consumes:
+        - application/json
+      parameters:
+        - name: bucket_name
+          in: path
+          description: Name of bucket
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: New name for the bucket
+          required: true
+          schema:
+            type: object
+            properties:
+              new_name:
+                type: string
+                description: New name of the bucket
+      responses:
+        200:
+          description: The bucket is renamed
+        401:
+          description: Access token is invalid or empty
+        403:
+          description: Access token doesn't have enough permissions
+        404:
+          description: Bucket doesn't exist
+        409:
+          description: Bucket with the new name already exists
+        422:
+          description: JSON request is invalid
+  /api/v1/b/{bucket_name}/{entry_name}:
+    get:
+      summary: Get a record from an entry
+      parameters:
+        - name: bucket_name
+          in: path
+          required: true
+          type: string
+          description: Name of bucket
+        - name: entry_name
+          in: path
+          required: true
+          type: string
+          description: Name of entry
+        - name: q
+          in: query
+          required: false
+          type: string
+          description: A query ID to read the next record in the query. If it is set, the `ts` parameter is ignored.
+        - name: ts
+          in: query
+          required: false
+          type: integer
+          format: int64
+          description: A UNIX timestamp in microseconds. If it is empty, the latest record is returned.
+      responses:
+        200:
+          description: The record is found and returned in body of the response
+          schema:
+            type: string
+        204:
+          description: No Content - If there is no record available for the given query
+        401:
+          description: Unauthorized - Access token is invalid or empty
+        403:
+          description: Forbidden - Access token denied
+        404:
+          description: Not Found - The bucket or record with the timestamp not found
+        422:
+          description: Unprocessable Entity - Bad timestamp
+      produces:
+        - text/plain
+    post:
+      summary: Write a record to an entry
+      description: Write a single record to an entry. ReductStore creates an entry on the first write operation.
+      parameters:
+        - name: bucket_name
+          in: path
+          required: true
+          type: string
+          description: Name of bucket
+        - name: entry_name
+          in: path
+          required: true
+          type: string
+          description: Name of entry
+        - name: ts
+          in: query
+          required: true
+          type: integer
+          format: int64
+          description: A UNIX timestamp in microseconds
+        - name: Content-Length
+          in: header
+          required: true
+          type: integer
+          format: int64
+          description: Content-length is required to start an asynchronous write operation
+        - name: x-reduct-label-<name>
+          in: header
+          required: false
+          type: string
+          description: A value of a label assigned to the record
+        - name: body
+          in: body
+          required: false
+          description: Record payload (can be empty)
+          schema:
+            type: string
+            format: binary
+      responses:
+        '200':
+          description: The record is written
+        '400':
+          description: Posted content bigger or smaller than content-length
+        '401':
+          description: Access token is invalid or empty
+        '403':
+          description: Access token does not have write permissions
+        '404':
+          description: Bucket is not found
+        '409':
+          description: A record with the same timestamp already exists
+        '422':
+          description: Bad timestamp
+  /api/v1/b/{bucket_name}/{entry_name}/batch:
+    get:
+      summary: Get a batch of records from an entry
+      parameters:
+        - name: bucket_name
+          in: path
+          required: true
+          type: string
+          description: Name of bucket
+        - name: entry_name
+          in: path
+          required: true
+          type: string
+          description: Name of entry
+        - name: q
+          in: query
+          required: true
+          type: integer
+          description: A query ID to read the next record in the query
+      responses:
+        200:
+          description: The batch of records is found and returned in body of the response
+          schema:
+            type: string
+        204:
+          description: No Content - If there is no record available for the given query
+        401:
+          description: Unauthorized - Access token is invalid or empty
+        403:
+          description: Forbidden - Access token denied
+        404:
+          description: Not Found - The bucket or record not found
+        422:
+          description: Unprocessable Entity - Bad timestamp
+      produces:
+        - text/plain
+    post:
+      summary: Write batch of records
+      description: Write multiple records to an entry using the Batch Protocol.
+      parameters:
+        - name: bucket_name
+          in: path
+          required: true
+          type: string
+          description: Name of bucket
+        - name: entry_name
+          in: path
+          required: true
+          type: string
+          description: Name of entry
+        - name: body
+          in: body
+          required: false
+          description: Batch of records payload
+          schema:
+            type: string
+            format: binary
+      responses:
+        '200':
+          description: The request was valid. However, some records may not be written. Check headers.
+        '400':
+          description: Posted content bigger or smaller than content-length
+        '401':
+          description: Access token is invalid or empty
+        '403':
+          description: Access token does not have write permissions
+        '404':
+          description: Bucket is not found
+        '422':
+          description: Bad timestamp or header format
+  /api/v1/b/{bucket_name}/{entry_name}/q:
+    get:
+      summary: Query records for a time interval
+      description: Deprecated since version 1.13. Use the Query API instead.
+      parameters:
+        - name: bucket_name
+          in: path
+          required: true
+          type: string
+          description: Name of bucket
+        - name: entry_name
+          in: path
+          required: true
+          type: string
+          description: Name of entry
+        - name: start
+          in: query
+          required: false
+          type: integer
+          format: int64
+          description: Start time (UNIX timestamp in microseconds)
+        - name: stop
+          in: query
+          required: false
+          type: integer
+          format: int64
+          description: Stop time (UNIX timestamp in microseconds)
+        - name: ttl
+          in: query
+          required: false
+          type: integer
+          description: TTL (Time To Live) of the query in seconds (default 5s)
+        - name: continuous
+          in: query
+          required: false
+          type: boolean
+          description: Keep query if no records for the request
+        - name: limit
+          in: query
+          required: false
+          type: integer
+          description: Maximum number of records in the query
+        - name: each_n
+          in: query
+          required: false
+          type: integer
+          description: Return only every N-th record
+        - name: each_s
+          in: query
+          required: false
+          type: number
+          format: float
+          description: Return only one record per S seconds
+      # OpenAPI 2.0 does not support dynamic parameter names (like include-{label_name})
+      # You would need to manually list possible includes/excludes if needed.
+
+      responses:
+        200:
+          description: Query created successfully
+          schema:
+            type: object
+            properties:
+              q:
+                type: integer
+                description: Query ID
+        401:
+          description: Unauthorized - Access token is invalid or empty
+        403:
+          description: Forbidden - Access token denied
+        404:
+          description: Not Found - The bucket or entry not found
+        422:
+          description: Unprocessable Entity - Bad timestamp
+      produces:
+        - application/json
