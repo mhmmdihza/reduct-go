@@ -89,7 +89,7 @@ func TestNewIntegration(t *testing.T) {
 			integration, err := NewIntegration(server.URL, sc.clientOptions)
 			assert.NoError(t, err)
 			assert.NotNil(t, integration)
-			_, err = integration.clientService.GetAPIV1BBucketName(operations.NewGetAPIV1BBucketNameParams().WithBucketName("bucket"))
+			_, err = integration.clientService.Operations.GetAPIV1BBucketName(operations.NewGetAPIV1BBucketNameParams().WithBucketName("bucket"))
 			// currently only negative scenario for timeout
 			if err != nil && !errors.Is(err, context.DeadlineExceeded) {
 				t.Fatalf("expected context deadline exceeded, got: %v", err)
@@ -112,7 +112,7 @@ func TestNewIntegrationTLS(t *testing.T) {
 		integration, err := NewIntegration(server.URL, options)
 		assert.NoError(t, err)
 		assert.NotNil(t, integration)
-		_, err = integration.clientService.GetAPIV1BBucketName(
+		_, err = integration.clientService.Operations.GetAPIV1BBucketName(
 			operations.NewGetAPIV1BBucketNameParams().WithBucketName("bucket"))
 		assert.NotNil(t, err)
 	})
@@ -120,7 +120,7 @@ func TestNewIntegrationTLS(t *testing.T) {
 		integration, err := NewIntegration(server.URL, nil)
 		assert.NoError(t, err)
 		assert.NotNil(t, integration)
-		_, err = integration.clientService.GetAPIV1BBucketName(
+		_, err = integration.clientService.Operations.GetAPIV1BBucketName(
 			operations.NewGetAPIV1BBucketNameParams().WithBucketName("bucket"))
 		assert.NotNil(t, err)
 	})

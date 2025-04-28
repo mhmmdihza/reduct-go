@@ -7,11 +7,11 @@ import (
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	"github.com/mhmmdihza/reduct-go/reduct/integration/client/operations"
+	"github.com/mhmmdihza/reduct-go/reduct/integration/client"
 )
 
 type Integration struct {
-	clientService operations.ClientService
+	clientService *client.Reduct
 }
 
 type ClientOptions struct {
@@ -31,7 +31,7 @@ func NewIntegration(url string, options *ClientOptions) (*Integration, error) {
 	}
 
 	if options == nil {
-		return &Integration{operations.New(newTransport(cl), strfmt.Default)}, nil
+		return &Integration{client.New(newTransport(cl), strfmt.Default)}, nil
 	}
 
 	if options.VerifySSL {
@@ -50,5 +50,5 @@ func NewIntegration(url string, options *ClientOptions) (*Integration, error) {
 		transport.DefaultAuthentication = httptransport.BearerToken(options.ApiToken)
 	}
 
-	return &Integration{operations.New(transport, strfmt.Default)}, nil
+	return &Integration{client.New(transport, strfmt.Default)}, nil
 }
