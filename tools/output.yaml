@@ -437,9 +437,8 @@ paths:
           type: number
           format: float
           description: Return only one record per S seconds
-      # OpenAPI 2.0 does not support dynamic parameter names (like include-{label_name})
-      # You would need to manually list possible includes/excludes if needed.
-
+          # OpenAPI 2.0 does not support dynamic parameter names (like include-{label_name})
+          # You would need to manually list possible includes/excludes if needed.
       responses:
         200:
           description: Query created successfully
