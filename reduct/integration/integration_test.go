@@ -127,10 +127,11 @@ func TestNewIntegrationTLS(t *testing.T) {
 }
 
 type expectedApiRequest struct {
-	method  string
-	path    string
-	body    string
-	headers map[string]string
+	method     string
+	path       string
+	body       string
+	headers    map[string]string
+	queryParam map[string]string
 }
 
 type mockApiResponse struct {
@@ -159,10 +160,17 @@ func MockAPIServer(
 			t.Errorf("Expected path %s, got %s", expectedRequest.path, r.URL.Path)
 		}
 
+		// Verify query param
+		for key, expectedValue := range expectedRequest.queryParam {
+			if got := r.URL.Query().Get(key); got != expectedValue {
+				t.Errorf("Expected header %s=%s, got %s", key, expectedValue, got)
+			}
+		}
+
 		// Verify headers
 		for key, expectedValue := range expectedRequest.headers {
 			if got := r.Header.Get(key); got != expectedValue {
-				t.Errorf("Expected header %s=%s, got %s", key, expectedValue, got)
+				t.Errorf("Expected header %s=%s, got %s - %+v", key, expectedValue, got, r.Header)
 			}
 		}
 
