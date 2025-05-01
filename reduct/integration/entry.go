@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 
@@ -10,22 +9,9 @@ import (
 	"github.com/mhmmdihza/reduct-go/reduct/integration/client/operations"
 )
 
-type readCloserWithLen struct {
-	*bytes.Reader
-}
-
-func (r *readCloserWithLen) Close() error {
-	return nil
-}
-
-func NewReadCloserWithLen(data []byte) (io.ReadSeekCloser, int) {
-	reader := bytes.NewReader(data)
-	return &readCloserWithLen{reader}, reader.Len()
-}
-
-func (i *Integration) WriteEntry(data []byte, bucketName, entryName string, ts, contentLength int64, xReductLabelHeader map[string]string) error {
+func (i *Integration) WriteEntry(data io.ReadCloser, bucketName, entryName string, ts, contentLength int64, xReductLabelHeader map[string]string) error {
 	_, err := i.clientService.Operations.PostAPIV1BBucketNameEntryName(operations.NewPostAPIV1BBucketNameEntryNameParams().
-		WithBody(io.NopCloser(bytes.NewReader(data))).
+		WithBody(data).
 		WithBucketName(bucketName).
 		WithEntryName(entryName).
 		WithTs(ts).
